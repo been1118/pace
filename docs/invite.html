@@ -67,7 +67,19 @@ const SUPABASE_URL = "https://akxvhjflqsralrntliwm.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFreHZoamZscXNyYWxybnRsaXdtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ5NTQ5MDEsImV4cCI6MjEwMDUzMDkwMX0.74kjAae0lvzEjqu_3Btldi1mFUtNLZn9jNcRLnbzBcg";
 
 const token = new URLSearchParams(location.search).get("t") || "";
-document.getElementById("openApp").href = location.href;
+const APPSTORE = "https://apps.apple.com/kr/app/id6794831435";
+
+// 카카오톡·인스타그램 등 인앱 브라우저는 Universal Link를 무시하므로
+// 커스텀 스킴으로 앱을 연다. 앱이 없으면 아무 일도 안 일어나므로,
+// 잠시 뒤에도 페이지가 그대로면 App Store로 보낸다.
+document.getElementById("openApp").addEventListener("click", (e) => {
+  e.preventDefault();
+  const fallback = setTimeout(() => { location.href = APPSTORE; }, 1500);
+  const cancel = () => clearTimeout(fallback);   // 앱이 열려 페이지가 가려지면 취소
+  document.addEventListener("visibilitychange", () => { if (document.hidden) cancel(); });
+  window.addEventListener("pagehide", cancel);
+  location.href = `pace://invite?t=${encodeURIComponent(token)}`;
+});
 
 // 유효하지 않은 토큰이면 크루 정보를 아예 내려주지 않는다(서버에서 차단).
 fetch(`${SUPABASE_URL}/rest/v1/rpc/crew_invite_preview`, {
